@@ -1,7 +1,9 @@
 // ScheduleForm.jsx
 import React, { useState, useEffect } from "react";
-import { useAPIAction } from "./hooks/useAPI";
+import { useDepartments, useInstructors, useAPIAction } from "./hooks/useAPI";
 import { scheduleAPI } from "./services/api";
+import Toast from "./components/Toast";
+import { useToast } from "./hooks/useToast";
 
 const ScheduleForm = ({ schedule = null, onSuccess, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -19,6 +21,7 @@ const ScheduleForm = ({ schedule = null, onSuccess, onCancel }) => {
   });
 
   const { execute, loading, error } = useAPIAction();
+  const { toast, showSuccess, showError, hideToast } = useToast();
 
   // Populate form when editing
   useEffect(() => {
@@ -85,16 +88,35 @@ const ScheduleForm = ({ schedule = null, onSuccess, onCancel }) => {
       if (schedule) {
         // Update existing schedule
         result = await execute(() => scheduleAPI.update(schedule._id, submitData));
+        if (result) {
+          showSuccess(
+            "Schedule Updated", 
+            `Successfully updated "${submitData.subject}" schedule.`
+          );
+        }
       } else {
         // Create new schedule
         result = await execute(() => scheduleAPI.create(submitData));
+        if (result) {
+          showSuccess(
+            "Schedule Created", 
+            `Successfully created "${submitData.subject}" schedule.`
+          );
+        }
       }
       
       if (result) {
-        onSuccess && onSuccess(result);
+        // Small delay to let user see the toast before closing form
+        setTimeout(() => {
+          onSuccess && onSuccess(result);
+        }, 500);
       }
     } catch (err) {
       console.error('Form submission error:', err);
+      showError(
+        "Operation Failed",
+        "There was an error saving the schedule. Please try again."
+      );
     }
   };
 
@@ -106,7 +128,17 @@ const ScheduleForm = ({ schedule = null, onSuccess, onCancel }) => {
   };
 
   return (
-    <div className="card">
+    <>
+      <Toast
+        show={toast.show}
+        onClose={hideToast}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        duration={toast.duration}
+      />
+      
+      <div className="card">
       <div className="card-header">
         <h5 className="mb-0">
           {schedule ? "Edit Schedule" : "Add New Schedule"}
@@ -315,7 +347,8 @@ const ScheduleForm = ({ schedule = null, onSuccess, onCancel }) => {
           </div>
         </form>
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 

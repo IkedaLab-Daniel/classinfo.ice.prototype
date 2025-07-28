@@ -3,6 +3,8 @@ import React, { useState } from "react";
 import { useSchedules, useAPIAction } from "./hooks/useAPI";
 import { scheduleAPI } from "./services/api";
 import ScheduleForm from "./ScheduleForm";
+import Toast from "./components/Toast";
+import { useToast } from "./hooks/useToast";
 
 const ScheduleManagement = () => {
   const [showForm, setShowForm] = useState(false);
@@ -10,6 +12,8 @@ const ScheduleManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDate, setFilterDate] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("");
+  
+  const { toast, showToast, hideToast } = useToast();
 
   const { data: schedulesResponse, loading, error, refetch } = useSchedules();
   const { execute: deleteSchedule, loading: deleteLoading } = useAPIAction();
@@ -40,9 +44,19 @@ const ScheduleManagement = () => {
     if (window.confirm(`Are you sure you want to delete the "${subjectName}" schedule?`)) {
       try {
         await deleteSchedule(() => scheduleAPI.delete(scheduleId));
+        showToast(
+          'success',
+          'Schedule Deleted',
+          `"${subjectName}" schedule has been successfully deleted.`
+        );
         refetch(); // Refresh the list
       } catch (err) {
         console.error('Delete error:', err);
+        showToast(
+          'error',
+          'Delete Failed',
+          'Failed to delete the schedule. Please try again.'
+        );
       }
     }
   };
@@ -96,6 +110,15 @@ const ScheduleManagement = () => {
 
   return (
     <div className="container mt-5">
+      <Toast
+        show={toast.show}
+        onClose={hideToast}
+        type={toast.type}
+        title={toast.title}
+        message={toast.message}
+        duration={toast.duration}
+      />
+      
       <div className="row mb-4">
         <div className="col-md-8">
           <h2 className="mb-3">📅 Schedule Management</h2>
