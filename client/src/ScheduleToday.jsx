@@ -15,9 +15,16 @@ const ScheduleToday = () => {
   const { data: todaySchedulesResponse, loading: todayLoading } = useTodaySchedules();
   
   // Use API data if available, otherwise fall back to sample data
-  const selectedClasses = schedulesResponse || classSchedules.filter(item => item.date === selectedDate);
+  const selectedClasses = schedulesResponse || classSchedules.filter(item => {
+    // Handle both date formats: "2025-07-28" and "2025-07-28T00:00:00.000Z"
+    const itemDate = item.date.split ? item.date.split('T')[0] : item.date;
+    return itemDate === selectedDate;
+  });
   const todaySchedules = todaySchedulesResponse?.data || classSchedules.filter(
-    cls => cls.date === new Date().toISOString().split("T")[0]
+    cls => {
+      const clsDate = cls.date.split ? cls.date.split('T')[0] : cls.date;
+      return clsDate === new Date().toISOString().split("T")[0];
+    }
   );
 
   // Update current time every minute

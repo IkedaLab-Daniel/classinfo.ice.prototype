@@ -38,7 +38,11 @@ const WeeklySchedule = () => {
 
   const getClassesForDate = (date) => {
     return weeklySchedules
-      .filter(cls => cls.date === date)
+      .filter(cls => {
+        // Handle both date formats: "2025-07-28" and "2025-07-28T00:00:00.000Z"
+        const clsDate = cls.date.split('T')[0]; // Extract date part
+        return clsDate === date;
+      })
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   };
 
