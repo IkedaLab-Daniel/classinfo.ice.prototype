@@ -5,12 +5,12 @@ const classScheduleSchemas = {
   create: Joi.object({
     subject: Joi.string().trim().max(100).required(),
     instructor: Joi.string().trim().max(100).required(),
-    date: Joi.date().min('now').required(),
+    date: Joi.date().required(), // Removed .min('now') to allow past/present dates
     startTime: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).required(),
     endTime: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/).required(),
     room: Joi.string().trim().max(50).required(),
-    description: Joi.string().trim().max(500).allow(''),
-    credits: Joi.number().integer().min(1).max(6).required(),
+    description: Joi.string().trim().max(500).allow('').default(''),
+    credits: Joi.number().integer().min(1).max(6).default(3),
     department: Joi.string().trim().max(100).required(),
     capacity: Joi.number().integer().min(1).max(500).default(30),
     enrolledStudents: Joi.number().integer().min(0).default(0),
@@ -20,7 +20,7 @@ const classScheduleSchemas = {
   update: Joi.object({
     subject: Joi.string().trim().max(100),
     instructor: Joi.string().trim().max(100),
-    date: Joi.date().min('now'),
+    date: Joi.date(), // Removed .min('now') to allow past/present dates
     startTime: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
     endTime: Joi.string().pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/),
     room: Joi.string().trim().max(50),

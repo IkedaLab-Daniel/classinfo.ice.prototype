@@ -4,6 +4,7 @@ import Navigation from "./Navigation";
 import ScheduleToday from "./ScheduleToday";
 import WeeklySchedule from "./WeeklySchedule";
 import InstructorDirectory from "./InstructorDirectory";
+import ScheduleManagement from "./ScheduleManagement";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
@@ -17,6 +18,8 @@ function App() {
         return <WeeklySchedule />;
       case "instructors":
         return <InstructorDirectory />;
+      case "management":
+        return <ScheduleManagement />;
       default:
         return <ScheduleToday />;
     }

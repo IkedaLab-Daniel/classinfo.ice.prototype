@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useSchedulesByDate, useTodaySchedules } from "./hooks/useAPI";
 import { classSchedules } from "./sampledata"; // Fallback data
+import { extractDate } from "./utils/dateUtils";
 
 const ScheduleToday = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -17,12 +18,12 @@ const ScheduleToday = () => {
   // Use API data if available, otherwise fall back to sample data
   const selectedClasses = schedulesResponse || classSchedules.filter(item => {
     // Handle both date formats: "2025-07-28" and "2025-07-28T00:00:00.000Z"
-    const itemDate = item.date.split ? item.date.split('T')[0] : item.date;
+    const itemDate = extractDate(item.date);
     return itemDate === selectedDate;
   });
   const todaySchedules = todaySchedulesResponse?.data || classSchedules.filter(
     cls => {
-      const clsDate = cls.date.split ? cls.date.split('T')[0] : cls.date;
+      const clsDate = extractDate(cls.date);
       return clsDate === new Date().toISOString().split("T")[0];
     }
   );

@@ -5,7 +5,8 @@ const Navigation = ({ activeTab, setActiveTab }) => {
   const tabs = [
     { id: "schedule", label: "📅 Daily Schedule", icon: "🏫" },
     { id: "weekly", label: "📊 Weekly View", icon: "📅" },
-    { id: "instructors", label: "👨‍🏫 Instructors", icon: "👥" }
+    { id: "instructors", label: "👨‍🏫 Instructors", icon: "👥" },
+    { id: "management", label: "⚙️ Manage Schedules", icon: "⚙️" }
   ];
 
   return (
