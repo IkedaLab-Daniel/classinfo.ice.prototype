@@ -1,6 +1,7 @@
 // WeeklySchedule.jsx
 import React, { useState } from "react";
-import { classSchedules } from "./sampledata";
+import { useWeeklySchedules } from "./hooks/useAPI";
+import { classSchedules } from "./sampledata"; // Fallback data
 
 const WeeklySchedule = () => {
   const [selectedWeek, setSelectedWeek] = useState(() => {
@@ -24,8 +25,19 @@ const WeeklySchedule = () => {
   const weekDates = getWeekDates(selectedWeek);
   const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
+  // Get end date for the week
+  const endDate = weekDates[weekDates.length - 1];
+  
+  // Fetch weekly schedules
+  const { data: weeklyResponse, loading, error } = useWeeklySchedules(selectedWeek, endDate);
+  
+  // Use API data if available, otherwise fall back to sample data
+  const weeklySchedules = weeklyResponse?.data || classSchedules.filter(
+    cls => cls.date >= selectedWeek && cls.date <= endDate
+  );
+
   const getClassesForDate = (date) => {
-    return classSchedules
+    return weeklySchedules
       .filter(cls => cls.date === date)
       .sort((a, b) => a.startTime.localeCompare(b.startTime));
   };
@@ -42,8 +54,26 @@ const WeeklySchedule = () => {
     setSelectedWeek(newWeek.toISOString().split("T")[0]);
   };
 
+  // Loading state - only show if we don't have fallback data
+  if (loading && weeklySchedules.length === 0) {
+    return (
+      <div className="container mt-5">
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-5">
+      {error && (
+        <div className="alert alert-warning alert-dismissible" role="alert">
+          <strong>Note:</strong> Using offline data. Server connection failed: {error}
+        </div>
+      )}
       <div className="row mb-4">
         <div className="col-md-8">
           <h2 className="mb-3">📅 Weekly Schedule</h2>

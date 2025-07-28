@@ -1,11 +1,24 @@
 // ScheduleToday.jsx
 import React, { useState, useEffect } from "react";
-import { classSchedules } from "./sampledata";
+import { useSchedulesByDate, useTodaySchedules } from "./hooks/useAPI";
+import { classSchedules } from "./sampledata"; // Fallback data
 
 const ScheduleToday = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [filter, setFilter] = useState("all");
+
+  // Fetch schedules for selected date
+  const { data: schedulesResponse, loading, error, refetch } = useSchedulesByDate(selectedDate);
+  
+  // Fetch today's schedules for next class calculation
+  const { data: todaySchedulesResponse, loading: todayLoading } = useTodaySchedules();
+  
+  // Use API data if available, otherwise fall back to sample data
+  const selectedClasses = schedulesResponse || classSchedules.filter(item => item.date === selectedDate);
+  const todaySchedules = todaySchedulesResponse?.data || classSchedules.filter(
+    cls => cls.date === new Date().toISOString().split("T")[0]
+  );
 
   // Update current time every minute
   useEffect(() => {
@@ -14,10 +27,6 @@ const ScheduleToday = () => {
     }, 60000);
     return () => clearInterval(timer);
   }, []);
-
-  const selectedClasses = classSchedules.filter(
-    (item) => item.date === selectedDate
-  );
 
   const getClassStatus = (startTime, endTime) => {
     const now = currentTime;
@@ -71,17 +80,37 @@ const ScheduleToday = () => {
 
   const getNextClass = () => {
     const now = currentTime.toTimeString().slice(0, 5);
-    const todayStr = currentTime.toISOString().split("T")[0];
     
-    return classSchedules
-      .filter(cls => cls.date === todayStr && cls.startTime > now)
+    return todaySchedules
+      .filter(cls => cls.startTime > now)
       .sort((a, b) => a.startTime.localeCompare(b.startTime))[0];
   };
 
   const nextClass = getNextClass();
 
+  // Loading and error states - only show loading if we don't have fallback data
+  if (loading && selectedClasses.length === 0) {
+    return (
+      <div className="container mt-5">
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-5">
+      {error && (
+        <div className="alert alert-warning alert-dismissible" role="alert">
+          <strong>Note:</strong> Using offline data. Server connection failed: {error}
+          <button className="btn btn-sm btn-outline-warning ms-2" onClick={refetch}>
+            Retry Connection
+          </button>
+        </div>
+      )}
       <div className="row mb-4">
         <div className="col-md-8">
           <h2 className="mb-3">� Class Schedule</h2>

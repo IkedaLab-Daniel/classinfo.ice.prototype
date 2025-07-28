@@ -1,13 +1,24 @@
 // InstructorDirectory.jsx
-import React, { useState } from "react";
-import { instructors, classSchedules, departments } from "./sampledata";
+import React, { useState, useEffect } from "react";
+import { useInstructors, useDepartments, useSchedules } from "./hooks/useAPI";
+import { instructors, classSchedules, departments } from "./sampledata"; // Fallback data
 
 const InstructorDirectory = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDepartment, setSelectedDepartment] = useState("all");
 
+  // Fetch data from API
+  const { data: instructorsResponse, loading: instructorsLoading, error: instructorsError } = useInstructors();
+  const { data: departmentsResponse, loading: departmentsLoading } = useDepartments();
+  const { data: schedulesResponse, loading: schedulesLoading } = useSchedules();
+
+  // Use API data if available, otherwise fall back to sample data
+  const instructorsData = instructorsResponse?.data || instructors;
+  const departmentsData = departmentsResponse?.data || departments;
+  const allSchedules = schedulesResponse?.data || classSchedules;
+
   const getInstructorClasses = (instructorName) => {
-    return classSchedules.filter(cls => cls.instructor === instructorName);
+    return allSchedules.filter(cls => cls.instructor === instructorName);
   };
 
   const getUpcomingClasses = (instructorName) => {
@@ -15,7 +26,7 @@ const InstructorDirectory = () => {
     const today = now.toISOString().split("T")[0];
     const currentTime = now.toTimeString().slice(0, 5);
     
-    return classSchedules.filter(cls => 
+    return allSchedules.filter(cls => 
       cls.instructor === instructorName && 
       (cls.date > today || (cls.date === today && cls.startTime > currentTime))
     ).sort((a, b) => {
@@ -24,7 +35,7 @@ const InstructorDirectory = () => {
     });
   };
 
-  const filteredInstructors = instructors.filter(instructor => {
+  const filteredInstructors = instructorsData.filter(instructor => {
     const matchesSearch = instructor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          instructor.department.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDepartment = selectedDepartment === "all" || instructor.department === selectedDepartment;
@@ -41,8 +52,27 @@ const InstructorDirectory = () => {
     });
   };
 
+  // Loading state - only show if we don't have fallback data
+  if ((instructorsLoading || departmentsLoading || schedulesLoading) && instructorsData.length === 0) {
+    return (
+      <div className="container mt-5">
+        <div className="d-flex justify-content-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-5">
+      {instructorsError && (
+        <div className="alert alert-warning alert-dismissible" role="alert">
+          <strong>Note:</strong> Using offline data. Server connection failed: {instructorsError}
+        </div>
+      )}
+      
       <div className="row mb-4">
         <div className="col-md-8">
           <h2 className="mb-3">👨‍🏫 Instructor Directory</h2>
@@ -70,8 +100,10 @@ const InstructorDirectory = () => {
             onChange={(e) => setSelectedDepartment(e.target.value)}
           >
             <option value="all">All Departments</option>
-            {departments.map(dept => (
-              <option key={dept} value={dept}>{dept}</option>
+            {departmentsData.map(dept => (
+              <option key={dept.name || dept} value={dept.name || dept}>
+                {dept.name || dept}
+              </option>
             ))}
           </select>
         </div>
